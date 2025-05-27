@@ -182,7 +182,7 @@ def main():
     st.markdown(f"### Analysis of {selected_display}")
     
     # Create tabs for different views
-    tab1, tab2, tab3 = st.tabs(["📈 Trend Analysis", "📊 Comparison", "📋 Detailed Data"])
+    tab1, tab2 = st.tabs(["📈 Trend Analysis", "📊 Comparison"])
     
     with tab1:
         # Enhanced visualization
@@ -315,111 +315,10 @@ def main():
                 
                 plt.tight_layout()
                 st.pyplot(fig)
-                
-                # Add additional information in columns
-                st.markdown("#### Key Metrics (2023)")
-                
-                # Create columns for metrics
-                cols = st.columns(len(latest_data))
-                
-                for i, item in enumerate(latest_data):
-                    with cols[i]:
-                        st.markdown(f"**{item['Country']}**")
-                        st.metric(
-                            label=f"{selected_user_metrics}s", 
-                            value=f"{item['Number']:,}",
-                            delta=None,
-                            delta_color="off"
-                        )
-                        st.caption(f"Out of {item['Total']:,} total companies")
             else:
                 st.warning("Insufficient data for comparison in 2023.")
         else:
             st.info("Select at least two countries to view comparison.")
-    
-    with tab3:
-        # Detailed data in a well-formatted table
-        if not filtered_data.empty:
-            # Get relevant columns
-            relevant_columns = ['Country']
-            for col in filtered_data.columns:
-                if selected_metrics in col:
-                    relevant_columns.append(col)
-            
-            # Create a new table with relevant columns
-            detailed_table = filtered_data[relevant_columns].copy()
-            
-            # Rename columns for better readability
-            column_mapping = {}
-            column_counters = {}  # To track how many times we've seen each base column name
-
-            for col in detailed_table.columns:
-                if col == 'Country':
-                    continue
-                
-                if f"{selected_metrics} " in col:
-                    parts = col.split(" ")
-                    year = parts[1]
-                    metric_type = parts[2]
-                    
-                    if metric_type == "Obs":
-                        base_name = f"Total companies ({year})"
-                    elif metric_type == "Num":
-                        base_name = f"Number of {selected_user_metrics}s ({year})"
-                    elif metric_type == "%":
-                        base_name = f"Percentage ({year})"
-                    else:
-                        base_name = col
-                    
-                    # Add a counter suffix if we've seen this base name before
-                    if base_name in column_counters:
-                        column_counters[base_name] += 1
-                        new_name = f"{base_name} ({column_counters[base_name]})"
-                    else:
-                        column_counters[base_name] = 0
-                        new_name = base_name
-                    
-                    column_mapping[col] = new_name
-
-            # Apply column renaming
-            detailed_table = detailed_table.rename(columns=column_mapping)
-
-            
-            
-            # Set index to country
-            detailed_table = detailed_table.set_index('Country')
-            
-            # Group columns by year
-            years = [2019, 2020, 2021, 2022, 2023]
-            year_columns = {}
-            
-            for year in years:
-                year_cols = [col for col in detailed_table.columns if f"({year})" in col]
-                year_columns[year] = year_cols
-            
-            # Create tabs for each year
-            year_tabs = st.tabs([f"{year}" for year in years])
-            
-            for i, year in enumerate(years):
-                with year_tabs[i]:
-                    if year_columns[year]:
-                        st.dataframe(
-                            detailed_table[year_columns[year]],
-                            use_container_width=True,
-                            height=min(125 * len(selected_countries) + 50, 400)
-                        )
-                    else:
-                        st.info(f"No data available for {year}.")
-            
-            # Export options
-            st.download_button(
-                label="Download Full Data as CSV",
-                data=detailed_table.to_csv().encode('utf-8'),
-                file_name=f"{selected_user_metrics}_data.csv",
-                mime="text/csv",
-            )
-        else:
-            st.warning("No data available for the selected countries.")
     
     # Footer
     st.markdown('<div class="footer">© European Scaleup Institute. For more information, visit <a href="https://scaleupinstitute.eu/">scaleupinstitute.eu</a></div>', unsafe_allow_html=True)
